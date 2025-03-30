@@ -19,8 +19,8 @@ float amplitude = 0;
 float base_speed = 0;
 float period = 0;
 
-uint8_t userStartDelay [3] = {0,0,0};
-uint8_t startDelay = 0;
+// uint8_t userStartDelay [3] = {0,0,0}; // Commented out as requested
+uint8_t startDelay = 15 * 60 * 1000; // 15 minutes in milliseconds
 
 uint8_t userBeatCount = 100;
 uint16_t BeatCount = 0;
@@ -133,6 +133,11 @@ float sinusoidalModel(float baseSpeed, float amplitude, int period) {
 }
 
 void outputToDAC(float voltage_output) {
+  static unsigned long startTime = millis();
+  if (millis() - startTime < startDelay) {
+    return; // Delay the output for 15 minutes
+  }
+  
   voltage_output = constrain(voltage_output, 0, 3.3);
   int final_output = (int)((4096.0 / 3.3) * voltage_output);
   analogWrite(A6, final_output);
