@@ -22,7 +22,7 @@ float period = 0;
 // uint8_t userStartDelay [3] = {0,0,0}; // Commented out as requested
 uint8_t startDelay = 15 * 60 * 1000; // 15 minutes in milliseconds
 
-uint8_t userBeatCount = 100;
+const uint16_t beatLimit = 500; // Define a variable for the beat limit
 uint16_t BeatCount = 0;
 
 bool runTimeComplete = false;
@@ -38,6 +38,7 @@ char ReplyBuffer[] = "stuff"; // a string to send back
 
 WiFiUDP Udp;
 int loop_counter = 0;
+unsigned long lastCycleTime = 0; // Variable to track the last cycle time
 
 void setup() {
   Serial.begin(9600);
@@ -127,15 +128,29 @@ void loop() {
 }
 
 float sinusoidalModel(float baseSpeed, float amplitude, int period) {
+  static float lastSinusoidalOutput = 0;
   float timeWithinPeriod = (millis() % period) / (period / (pi * 2));
   float sinusoidalOutput = (amplitude * sin(timeWithinPeriod)) + baseSpeed;
+
+  if (lastSinusoidalOutput < baseSpeed && sinusoidalOutput >= baseSpeed) {
+    if (BeatCount < beatLimit) {
+      BeatCount++; // Increment beat counter every time a complete cycle is detected
+      Serial.print("Beat Count: ");
+      Serial.println(BeatCount);
+    } else {
+      Serial.println("Beat Count limit reached: ");
+      Serial.println(beatLimit);
+    }
+  }
+  lastSinusoidalOutput = sinusoidalOutput;
+
   return sinusoidalOutput;
 }
 
 void outputToDAC(float voltage_output) {
   static unsigned long startTime = millis();
-  if (millis() - startTime < startDelay) {
-    return; // Delay the output for 15 minutes
+  if (millis() - startTime < startDelay || BeatCount >= beatLimit) {
+    return; // Delay the output for 15 minutes or stop if beat count limit is reached
   }
   
   voltage_output = constrain(voltage_output, 0, 3.3);
