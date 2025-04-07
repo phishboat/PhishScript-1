@@ -19,10 +19,9 @@ float amplitude = 0;
 float base_speed = 0;
 float period = 0;
 
-uint8_t userStartDelay [3] = {0,0,0};
-uint8_t startDelay = 0;
+uint8_t userStartDelay[3] = {0,15,0}; // Initial value of 15 minutes in HH, MM, SS format
 
-uint8_t userBeatCount = 100;
+const uint16_t beatLimit = 500; // Define a variable for the beat limit
 uint16_t BeatCount = 0;
 
 bool runTimeComplete = false;
@@ -38,6 +37,7 @@ char ReplyBuffer[] = "stuff"; // a string to send back
 
 WiFiUDP Udp;
 int loop_counter = 0;
+unsigned long lastCycleTime = 0; // Variable to track the last cycle time
 
 void setup() {
   Serial.begin(9600);
@@ -113,41 +113,4 @@ void loop() {
       Udp.endPacket();
     }
   } else {
-    delay(10);
-  }
-
-  loop_counter++;
-
-  int periodScaled = period * ((periodMax - periodMin) / (tenBitMax - tenBitMin)) + periodMin;
-  float amplitudeScaled = amplitude * ((amplitudeMax - amplitudeMin) / (tenBitMax - tenBitMin)) + amplitudeMin;
-  float baseSpeedScaled = base_speed * ((baseSpeedMax - baseSpeedMin) / (tenBitMax - tenBitMin)) + baseSpeedMin;
-
-  float voltage_output = sinusoidalModel(baseSpeedScaled, amplitudeScaled, periodScaled);
-  outputToDAC(voltage_output);
-}
-
-float sinusoidalModel(float baseSpeed, float amplitude, int period) {
-  float timeWithinPeriod = (millis() % period) / (period / (pi * 2));
-  float sinusoidalOutput = (amplitude * sin(timeWithinPeriod)) + baseSpeed;
-  return sinusoidalOutput;
-}
-
-void outputToDAC(float voltage_output) {
-  voltage_output = constrain(voltage_output, 0, 3.3);
-  int final_output = (int)((4096.0 / 3.3) * voltage_output);
-  analogWrite(A6, final_output);
-}
-
-void printWifiStatus() {
-  Serial.print("SSID: ");
-  Serial.println(WiFi.SSID());
-
-  IPAddress ip = WiFi.localIP();
-  Serial.print("IP Address: ");
-  Serial.println(ip);
-
-  long rssi = WiFi.RSSI();
-  Serial.print("signal strength (RSSI):");
-  Serial.print(rssi);
-  Serial.println(" dBm");
-}
+    delay(10
