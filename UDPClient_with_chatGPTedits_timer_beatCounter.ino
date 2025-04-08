@@ -19,7 +19,8 @@ float amplitude = 0;
 float base_speed = 0;
 float period = 0;
 
-uint8_t userStartDelay[3] = {0,15,0}; // Initial value of 15 minutes in HH, MM, SS format
+const int startDelayMinutes = 15; // Variable for the start delay in minutes
+uint8_t userStartDelay[3] = {0, startDelayMinutes, 0}; // Initial value of start delay in HH, MM, SS format
 
 const uint16_t beatLimit = 500; // Define a variable for the beat limit
 uint16_t BeatCount = 0;
@@ -39,9 +40,12 @@ WiFiUDP Udp;
 int loop_counter = 0;
 unsigned long lastCycleTime = 0; // Variable to track the last cycle time
 
+const int ledPin = LED_BUILTIN;   // Define the LED pin
+
 void setup() {
   Serial.begin(9600);
   analogWriteResolution(12);
+  pinMode(ledPin, OUTPUT); // Initialize the LED pin as an output
 
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
@@ -69,6 +73,8 @@ void setup() {
 
   Udp.begin(localPort);
   Serial.println("Starting connection to server...");
+
+  blinkLED(60); // Blink the LED for 60 seconds before the start delay
 }
 
 void loop() {
@@ -113,4 +119,17 @@ void loop() {
       Udp.endPacket();
     }
   } else {
-    delay(10
+    delay(10);
+  }
+}
+
+// Function to blink the LED for a specified number of seconds
+void blinkLED(int seconds) {
+  unsigned long endTime = millis() + (seconds * 1000);
+  while (millis() < endTime) {
+    digitalWrite(ledPin, HIGH);   // Turn the LED on
+    delay(500);                   // Wait for 500 milliseconds
+    digitalWrite(ledPin, LOW);    // Turn the LED off
+    delay(500);                   // Wait for 500 milliseconds
+  }
+}
